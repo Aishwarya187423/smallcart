@@ -27,13 +27,13 @@ def configure_telemetry():
     service_version = os.getenv('OTEL_SERVICE_VERSION', '1.0.0')
     environment = os.getenv('DEPLOYMENT_ENVIRONMENT', 'production')
     
-    # Resource attributes
+    # Resource attributes (using underscores for Prometheus compatibility)
     resource = Resource.create({
-        "service.name": service_name,
-        "service.version": service_version,
-        "deployment.environment": environment,
-        "telemetry.sdk.name": "opentelemetry",
-        "telemetry.sdk.language": "python",
+        "service_name": service_name,
+        "service_version": service_version,
+        "deployment_environment": environment,
+        "telemetry_sdk_name": "opentelemetry",
+        "telemetry_sdk_language": "python",
     })
     
     # Configure tracing
