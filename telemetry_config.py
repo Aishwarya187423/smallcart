@@ -47,11 +47,15 @@ def configure_telemetry():
     # span_processor = BatchSpanProcessor(otlp_trace_exporter)
     # tracer_provider.add_span_processor(span_processor)
     
-    # Configure metrics with Prometheus exporter
+    # Configure metrics with Prometheus exporter (with custom resource)
+    # Use empty resource to avoid automatic OpenTelemetry attributes that conflict with Prometheus
     prometheus_reader = PrometheusMetricReader()
     
+    # Create a minimal resource to avoid label conflicts
+    clean_resource = Resource.create({})
+    
     metrics.set_meter_provider(MeterProvider(
-        resource=resource,
+        resource=clean_resource,
         metric_readers=[prometheus_reader]
     ))
     
