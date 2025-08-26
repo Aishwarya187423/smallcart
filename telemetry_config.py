@@ -12,10 +12,12 @@ from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry.exporter.prometheus import PrometheusMetricReader
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from opentelemetry.instrumentation.sqlite3 import SQLite3Instrumentor
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
+from prometheus_client import start_http_server, generate_latest, CONTENT_TYPE_LATEST
 
 def configure_telemetry():
     """Configure OpenTelemetry for SmallCart application"""
@@ -47,18 +49,12 @@ def configure_telemetry():
     span_processor = BatchSpanProcessor(otlp_trace_exporter)
     tracer_provider.add_span_processor(span_processor)
     
-    # Configure metrics
-    metric_reader = PeriodicExportingMetricReader(
-        OTLPMetricExporter(
-            endpoint=os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT', 'http://localhost:4317'),
-            insecure=True,
-        ),
-        export_interval_millis=30000,  # Export every 30 seconds
-    )
+    # Configure metrics with Prometheus exporter
+    prometheus_reader = PrometheusMetricReader()
     
     metrics.set_meter_provider(MeterProvider(
         resource=resource,
-        metric_readers=[metric_reader]
+        metric_readers=[prometheus_reader]
     ))
     
     # Get tracer and meter for application use
@@ -157,6 +153,9 @@ def instrument_flask_app(app):
     # Store telemetry objects in app config for use in routes
     app.config['telemetry'] = telemetry
     
+    # Add metrics endpoint
+    add_metrics_endpoint(app)
+    
     return app
 
 def create_custom_span(tracer, name, attributes=None):
@@ -178,3 +177,12 @@ def log_with_trace(message, level=logging.INFO):
         formatted_message = message
     
     logging.log(level, formatted_message)
+
+def add_metrics_endpoint(app):
+    """Add /metrics endpoint for Prometheus scraping"""
+    from flask import Response
+    
+    @app.route('/metrics')
+    def metrics():
+        """Prometheus metrics endpoint"""
+        return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
