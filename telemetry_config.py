@@ -27,27 +27,25 @@ def configure_telemetry():
     service_version = os.getenv('OTEL_SERVICE_VERSION', '1.0.0')
     environment = os.getenv('DEPLOYMENT_ENVIRONMENT', 'production')
     
-    # Resource attributes (using underscores for Prometheus compatibility)
+    # Resource attributes (simplified for Prometheus compatibility)
     resource = Resource.create({
         "service_name": service_name,
         "service_version": service_version,
-        "deployment_environment": environment,
-        "telemetry_sdk_name": "opentelemetry",
-        "telemetry_sdk_language": "python",
+        "environment": environment,
     })
     
-    # Configure tracing
-    trace.set_tracer_provider(TracerProvider(resource=resource))
-    tracer_provider = trace.get_tracer_provider()
+    # Configure tracing (disabled for now to avoid OTLP issues)
+    # trace.set_tracer_provider(TracerProvider(resource=resource))
+    # tracer_provider = trace.get_tracer_provider()
     
-    # OTLP Trace Exporter (to Grafana/Tempo)
-    otlp_trace_exporter = OTLPSpanExporter(
-        endpoint=os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT', 'http://localhost:4317'),
-        insecure=True,
-    )
+    # OTLP Trace Exporter (to Grafana/Tempo) - DISABLED
+    # otlp_trace_exporter = OTLPSpanExporter(
+    #     endpoint=os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT', 'http://localhost:4317'),
+    #     insecure=True,
+    # )
     
-    span_processor = BatchSpanProcessor(otlp_trace_exporter)
-    tracer_provider.add_span_processor(span_processor)
+    # span_processor = BatchSpanProcessor(otlp_trace_exporter)
+    # tracer_provider.add_span_processor(span_processor)
     
     # Configure metrics with Prometheus exporter
     prometheus_reader = PrometheusMetricReader()
@@ -58,7 +56,7 @@ def configure_telemetry():
     ))
     
     # Get tracer and meter for application use
-    tracer = trace.get_tracer(__name__)
+    tracer = None  # Disabled tracing for now
     meter = metrics.get_meter(__name__)
     
     # Create custom metrics
