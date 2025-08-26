@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Create Order - Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="bi bi-plus-circle"></i> Create New Order
+        </h2>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="user_id" class="form-label">Customer *</label>
+                                <select class="form-select" id="user_id" name="user_id" required>
+                                    <option value="">Select a customer...</option>
+                                    {% for user in users %}
+                                    <option value="{{ user.id }}">{{ user.username }} ({{ user.email }})</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Choose the customer for this order</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="status" class="form-label">Initial Status *</label>
+                                <select class="form-select" id="status" name="status" required>
+                                    <option value="pending" selected>Pending</option>
+                                    <option value="processing">Processing</option>
+                                    <option value="shipped">Shipped</option>
+                                    <option value="delivered">Delivered</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="total_amount" class="form-label">Total Amount ($) *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="total_amount" name="total_amount" 
+                                   step="0.01" min="0" required placeholder="0.00">
+                        </div>
+                        <div class="form-text">Enter the total amount for this order</div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading"><i class="bi bi-info-circle"></i> Note:</h6>
+                        <p class="mb-0">This form creates a basic order record. To add specific products to the order, customers should use the normal checkout process. This form is primarily for administrative purposes or manual order entry.</p>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin_orders') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Create Order
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if not users %}
+<div class="row justify-content-center mt-3">
+    <div class="col-md-8">
+        <div class="alert alert-warning">
+            <h6 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> No Customers Available</h6>
+            <p class="mb-0">There are no registered customers in the system. Users need to register first before orders can be created for them.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

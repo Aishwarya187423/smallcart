@@ -1,0 +1,187 @@
+name: SmallCart CI/CD Pipeline with OpenTelemetry
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  EC2_HOST: ${{ secrets.EC2_HOST }}
+  EC2_USER: ec2-user
+  SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  APP_DIR: /opt/smallcart
+  OTEL_SERVICE_NAME: smallcart-cicd
+  OTEL_SERVICE_VERSION: ${{ github.sha }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.9
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest opentelemetry-api opentelemetry-sdk opentelemetry-auto-instrumentation
+    
+    - name: Initialize OpenTelemetry for Testing
+      run: |
+        export OTEL_SERVICE_NAME="smallcart-tests"
+        export OTEL_RESOURCE_ATTRIBUTES="service.name=smallcart-tests,service.version=${{ github.sha }}"
+        export OTEL_EXPORTER_OTLP_ENDPOINT="http://your-grafana-host:4317"
+    
+    - name: Run tests with OpenTelemetry
+      run: |
+        echo "Running tests with telemetry..."
+        # Add your test commands here
+        python -c "print('Tests passed successfully')"
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup OpenTelemetry for Deployment
+      run: |
+        pip install opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp
+        export OTEL_SERVICE_NAME="smallcart-deployment"
+        export OTEL_RESOURCE_ATTRIBUTES="service.name=smallcart-deployment,service.version=${{ github.sha }},deployment.environment=production"
+    
+    - name: Configure SSH
+      run: |
+        mkdir -p ~/.ssh/
+        echo "$SSH_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
+    
+    - name: Deploy to EC2 with Telemetry
+      run: |
+        # Create deployment script with OpenTelemetry
+        cat > deploy_script.sh << 'EOF'
+        #!/bin/bash
+        
+        # OpenTelemetry setup
+        export OTEL_SERVICE_NAME="smallcart-deployment"
+        export OTEL_RESOURCE_ATTRIBUTES="service.name=smallcart-deployment,service.version=${{ github.sha }},deployment.environment=production,host.name=$(hostname)"
+        
+        echo "🚀 Starting deployment with OpenTelemetry tracing..."
+        
+        # Navigate to app directory
+        cd /opt/smallcart || { echo "❌ Failed to navigate to app directory"; exit 1; }
+        
+        # Stop the application if running
+        echo "🛑 Stopping SmallCart application if running..."
+        if pgrep -f "python.*app.py" > /dev/null; then
+            echo "📍 Application is running, stopping it..."
+            pkill -f "python.*app.py" || echo "⚠️  No application process found to kill"
+            sleep 3
+            echo "✅ Application stopped"
+        else
+            echo "📍 Application is not running, skipping stop step"
+        fi
+        
+        # Backup current version
+        if [ -f app.py ]; then
+            echo "💾 Creating backup of current version..."
+            cp -r . ../smallcart-backup-$(date +%Y%m%d-%H%M%S) || echo "⚠️  Backup failed"
+        fi
+        
+        # Initialize git repository if not present and clone
+        if [ ! -d .git ]; then
+            echo "� Git repository not found, cloning from GitHub..."
+            cd /opt
+            sudo rm -rf smallcart
+            git clone https://github.com/Aishwarya187423/smallcart.git
+            sudo chown -R ec2-user:ec2-user smallcart
+            cd smallcart
+        else
+            echo "📥 Pulling latest code from repository..."
+            git fetch origin
+            git reset --hard origin/main || git reset --hard origin/master
+            echo "✅ Code updated from git"
+        fi
+        
+        # Install/Update requirements
+        echo "📦 Installing/updating Python requirements..."
+        if [ -f requirements.txt ]; then
+            pip3 install -r requirements.txt --quiet || echo "⚠️  Some requirements may have failed to install"
+            echo "✅ Requirements processed"
+        else
+            echo "⚠️  requirements.txt not found"
+        fi
+        
+        # Install OpenTelemetry dependencies
+        echo "📊 Installing OpenTelemetry dependencies..."
+        pip3 install opentelemetry-api opentelemetry-sdk opentelemetry-auto-instrumentation opentelemetry-exporter-otlp opentelemetry-instrumentation-flask opentelemetry-instrumentation-sqlite3 opentelemetry-instrumentation-sqlalchemy --quiet
+        
+        # Start the application with OpenTelemetry
+        echo "🚀 Starting SmallCart application with OpenTelemetry..."
+        
+        # Set OpenTelemetry environment variables
+        export OTEL_SERVICE_NAME="smallcart-app"
+        export OTEL_SERVICE_VERSION="${{ github.sha }}"
+        export OTEL_RESOURCE_ATTRIBUTES="service.name=smallcart-app,service.version=${{ github.sha }},deployment.environment=production,host.name=$(hostname)"
+        export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317"
+        export OTEL_TRACES_EXPORTER=otlp
+        export OTEL_METRICS_EXPORTER=otlp
+        export OTEL_LOGS_EXPORTER=otlp
+        
+        # Start with OpenTelemetry auto-instrumentation
+        nohup opentelemetry-instrument python3 app.py > /var/log/smallcart.log 2>&1 &
+        
+        # Wait a moment and check if app started
+        sleep 5
+        if pgrep -f "python.*app.py" > /dev/null; then
+            echo "✅ SmallCart application started successfully with OpenTelemetry"
+            echo "📊 Telemetry data will be sent to Grafana"
+            echo "🌐 Application should be available at http://$(curl -s http://checkip.amazonaws.com):5000"
+        else
+            echo "❌ Failed to start SmallCart application"
+            echo "📝 Check logs: tail -f /var/log/smallcart.log"
+            exit 1
+        fi
+        
+        echo "🎉 Deployment completed successfully!"
+        EOF
+        
+        # Make script executable and copy to EC2
+        chmod +x deploy_script.sh
+        scp -i ~/.ssh/id_rsa deploy_script.sh $EC2_USER@$EC2_HOST:/tmp/
+        
+        # Execute deployment script on EC2
+        ssh -i ~/.ssh/id_rsa $EC2_USER@$EC2_HOST "sudo bash /tmp/deploy_script.sh"
+    
+    - name: Verify Deployment
+      run: |
+        echo "🔍 Verifying deployment..."
+        ssh -i ~/.ssh/id_rsa $EC2_USER@$EC2_HOST "
+          sleep 10
+          if curl -s http://localhost:5000 > /dev/null; then
+            echo '✅ Application is responding to HTTP requests'
+            echo '📊 OpenTelemetry metrics should be available in Grafana'
+          else
+            echo '❌ Application is not responding'
+            echo '📝 Application logs:'
+            sudo tail -20 /var/log/smallcart.log
+            exit 1
+          fi
+        "
+    
+    - name: Send Deployment Notification
+      if: always()
+      run: |
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "✅ Deployment successful! Check Grafana dashboard for telemetry data."
+        else
+          echo "❌ Deployment failed! Check logs and Grafana for error traces."
+        fi

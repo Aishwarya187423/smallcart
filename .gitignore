@@ -1,0 +1,310 @@
+# SmallCart - GitIgnore File
+
+# ========================================
+# SECURITY - NEVER COMMIT THESE FILES
+# ========================================
+
+# AWS Key Pairs (CRITICAL - Contains private keys)
+*.pem
+*.ppk
+smallcart.pem
+smallcart.ppk
+
+# Environment files with secrets
+.env
+.env.local
+.env.production
+.env.development
+
+# AWS Credentials
+.aws/
+aws-credentials.json
+smallcart-infrastructure.json
+
+# ========================================
+# PYTHON VIRTUAL ENVIRONMENTS
+# ========================================
+
+# Virtual Environment directories
+venv/
+env/
+ENV/
+.venv/
+.env/
+.virtualenv/
+
+# Conda environments
+.conda/
+anaconda3/envs/
+miniconda3/envs/
+
+# ========================================
+# PYTHON COMPILED FILES
+# ========================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# ========================================
+# DATABASE FILES
+# ========================================
+
+# SQLite database files (comment out if you want to include sample data)
+*.db
+*.sqlite
+*.sqlite3
+smallcart.db
+
+# Database backups
+*.sql
+*.dump
+db_backup/
+
+# ========================================
+# IDE AND EDITOR FILES
+# ========================================
+
+# PyCharm
+.idea/
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ========================================
+# OPERATING SYSTEM FILES
+# ========================================
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ========================================
+# LOG FILES
+# ========================================
+
+# Application logs
+logs/
+*.log
+*.log.*
+log/
+app.log
+error.log
+access.log
+debug.log
+
+# Flask logs
+flask.log
+werkzeug.log
+
+# Gunicorn logs
+gunicorn.log
+gunicorn.err
+
+# ========================================
+# TEMPORARY FILES
+# ========================================
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Cache directories
+.cache/
+cache/
+.pytest_cache/
+
+# ========================================
+# DEPLOYMENT AND CI/CD
+# ========================================
+
+# Docker files (if using Docker)
+.dockerignore
+docker-compose.override.yml
+
+# Kubernetes
+*.yaml.backup
+*.yml.backup
+
+# Terraform (if using IaC)
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# ========================================
+# MONITORING AND TELEMETRY
+# ========================================
+
+# OpenTelemetry traces (if stored locally)
+traces/
+*.trace
+
+# Prometheus data
+prometheus_data/
+
+# Grafana data
+grafana_data/
+
+# ========================================
+# NODE.JS (if using any JS tools)
+# ========================================
+
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# ========================================
+# MISCELLANEOUS
+# ========================================
+
+# Jupyter Notebooks checkpoints
+.ipynb_checkpoints/
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Environment variables
+.envrc
+
+# Local configuration overrides
+local_settings.py
+config_local.py
+
+# Upload directories
+uploads/
+media/
+static/uploads/
+
+# ========================================
+# PROJECT SPECIFIC
+# ========================================
+
+# SmallCart specific files to ignore
+deployment_notes.txt
+local_config.py
+test_data.json
+backup_*.sql
+
+# Large files
+*.zip
+*.tar.gz
+*.tar
+*.rar
+
+# Generated documentation
+docs/_build/
+site/
+
+# Coverage reports
+htmlcov/
+
+# MyPy cache
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Order History - SmallCart{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="bi bi-clock-history"></i> Order History
+        </h2>
+    </div>
+</div>
+
+{% if orders %}
+<div class="row">
+    {% for order in orders %}
+    <div class="col-12 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <strong>Order #{{ order.id }}</strong>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="text-muted">{{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="badge 
+                            {% if order.status == 'pending' %}bg-warning
+                            {% elif order.status == 'processing' %}bg-info
+                            {% elif order.status == 'shipped' %}bg-primary
+                            {% elif order.status == 'delivered' %}bg-success
+                            {% elif order.status == 'cancelled' %}bg-danger
+                            {% else %}bg-secondary{% endif %}">
+                            {{ order.status.title() }}
+                        </span>
+                    </div>
+                    <div class="col-md-3 text-end">
+                        <strong>${{ "%.2f"|format(order.total_amount) }}</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <h6>Items Ordered:</h6>
+                <div class="row">
+                    {% for item in order.order_items %}
+                    <div class="col-md-6 col-lg-4 mb-2">
+                        <div class="d-flex align-items-center">
+                            {% if item.product.image_url %}
+                                <img src="{{ item.product.image_url }}" class="me-2" alt="{{ item.product.name }}" 
+                                     style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                            {% else %}
+                                <div class="bg-light d-flex align-items-center justify-content-center me-2" 
+                                     style="width: 50px; height: 50px; border-radius: 4px;">
+                                    <i class="bi bi-image text-muted"></i>
+                                </div>
+                            {% endif %}
+                            <div>
+                                <strong>{{ item.product.name }}</strong><br>
+                                <small class="text-muted">Qty: {{ item.quantity }} × ${{ "%.2f"|format(item.price) }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<nav aria-label="Order history navigation">
+    <div class="text-center mt-4">
+        <small class="text-muted">Showing {{ orders|length }} order(s)</small>
+    </div>
+</nav>
+
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-receipt text-muted" style="font-size: 4rem;"></i>
+    <h3 class="mt-3 text-muted">No orders yet</h3>
+    <p class="text-muted">You haven't placed any orders. Start shopping to see your order history!</p>
+    <a href="{{ url_for('home') }}" class="btn btn-primary">
+        <i class="bi bi-shop"></i> Start Shopping
+    </a>
+</div>
+{% endif %}
+{% endblock %}
